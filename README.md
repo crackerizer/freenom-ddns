@@ -7,4 +7,4 @@ Freenom Dynamic DNS updater
 
 License
 ----------------------------
-This script is licensed under [GPL v3 ](http://www.gnu.org/licenses/gpl-3.0.en.html) license
+This script is licensed under [GPL v3 ](https://github.com/crackerizer/freenom-ddns/blob/master/LICENSE) license
