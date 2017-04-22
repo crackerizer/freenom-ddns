@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*
 
-	/****************************************************************************
-	 *                             Configuration                                *
-	 ****************************************************************************/
+	/***************************************************************************
+	 *                            Configuration                                *
+	 **************************************************************************/
 	$USERNAME = '';
 	$PASSWORD = '';
 	$DEFAULT_TTL = 600;
@@ -43,9 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		),
 	);
 
-	/****************************************************************************
-	 *                             Main Program                                 *
-	 ****************************************************************************/
+	/***************************************************************************
+	 *                            Main Program                                 *
+	 **************************************************************************/
 	/* open log */
 	openlog("freenom-ddns", LOG_ODELAY, LOG_CRON);
 
@@ -70,9 +70,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	/* login */
 	$cmd = 	'curl --compressed -k -L -c "'.$COOKIE.
-					'" -F "username='.$USERNAME.
-					'" -F "password='.$PASSWORD.
-					'" "https://my.freenom.com/dologin.php" 2>&1';
+			'" -F "username='.$USERNAME.
+			'" -F "password='.$PASSWORD.
+			'" "https://my.freenom.com/dologin.php" 2>&1';
 
 	msg('Logging in to Freenom...');
 	dmsg($cmd);
@@ -80,8 +80,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	exec($cmd, $result);
 
 	$result = implode("\n", $result);
-
-	if(!(strpos($result, '/clientarea.php?incorrect=true') === false)) {
+	
+	if(!(strpos($result, 'incorrect%3Dtrue') === false)) {
 		msg('Login to Freenom failed.', true);
 		die();
 	}
@@ -109,8 +109,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 		/* retrieve record html */
 		$cmd = 	'curl --compressed -k -L -b "'.$COOKIE.
-						'" "https://my.freenom.com/clientarea.php?managedns='.
-						$domain['domain'].'&domainid='.$domain["id"].'" 2>&1';
+				'" "https://my.freenom.com/clientarea.php?managedns='.
+				$domain['domain'].'&domainid='.$domain["id"].'" 2>&1';
 
 		msg('Getting record list: '.$domain['domain']);
 		dmsg($cmd);
@@ -120,26 +120,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		$result = implode('', $result);
 
 		/* extract records list */
-		$pattern = 	'|<td valign="top">'.
-								'<input type="hidden" name="records\[(.*)\]\[line\]" '.
-								'value="" />'.
-								'<input type="hidden" name="records\[(.*)\]\[type\]" '.
-								'value="(.*)" />'.
-								'<input type="text" name="records\[(.*)\]\[name\]" '.
-								'value="(.*)" size="25" /></td>|U';
+		$pattern = '|<td valign="top">'.
+                    '<input type="hidden" name="records\[(.*)\]\[line\]" '.
+				    'value="" />'.
+                    '<input type="hidden" name="records\[(.*)\]\[type\]" '.
+                    'value="(.*)" />'.
+                    '<input type="text" name="records\[(.*)\]\[name\]" '.
+                    'value="(.*)" size="25" /></td>|U';
 
 		preg_match_all($pattern, $result, $raw_record);
 
 		/* extract ttl list */
 		$pattern = 	'|<td valign="top">'.
-								'<input type="text" name="records\[(.*)\]\[ttl\]" '.
-								'value="(.*)" style="width: 60px" /></td>|U';
+                    '<input type="text" name="records\[(.*)\]\[ttl\]" '.
+                    'value="(.*)" style="width: 60px" /></td>|U';
 
 		preg_match_all($pattern, $result, $raw_ttl);
 
 		/* extract value list */
 		$pattern = 	'|<input type="text" name="records\[(.*)\]\[value\]" '.
-								'value="(.*)" size="30" />|U';
+                    'value="(.*)" size="30" />|U';
 
 		preg_match_all($pattern, $result, $raw_val);
 
@@ -186,17 +186,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 			$freenom_host = strtoupper(($host == '@'?'':$host));
 
 			$arg =	'-F "records['.$record['no'].'][line]=" '.
-							'-F "records['.$record['no'].'][type]='.$record['type'].'" '.
-							'-F "records['.$record['no'].'][name]='.$freenom_host.'" '.
-							'-F "records['.$record['no'].'][ttl]='.$record['ttl'].'" '.
-							'-F "records['.$record['no'].'][value]='.$record['val'].'"';
+                    '-F "records['.$record['no'].'][type]='.$record['type'].'" '.
+                    '-F "records['.$record['no'].'][name]='.$freenom_host.'" '.
+                    '-F "records['.$record['no'].'][ttl]='.$record['ttl'].'" '.
+                    '-F "records['.$record['no'].'][value]='.$record['val'].'"';
 
 			array_push($cmd_args, $arg);
 		}
 
 		dmsg($cmd_args);
 
-		$cmd = 'curl --compressed -k -L -b "'.$COOKIE.'" -F "dnsaction=modify" ';
+		$cmd = 'curl --compressed -k -L -b "'.
+		        $COOKIE.'" -F "dnsaction=modify" ';
 		$cmd .= implode(" ", $cmd_args);
 		$cmd .= ' "https://my.freenom.com/clientarea.php?managedns=';
 		$cmd .= $domain['domain'].'&domainid='.$domain["id"].'" 2>&1';
@@ -216,7 +217,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		msg("Update {$domain['domain']} ({$domain['id']}): Done");
 	}
 
-	$cmd = 'curl --compressed -k -b "'.$COOKIE.'" "https://my.freenom.com/logout.php" > /dev/null 2>&1';
+	$cmd = 'curl --compressed -k -b "'.
+	        $COOKIE.'" "https://my.freenom.com/logout.php" > /dev/null 2>&1';
 
 	msg('Log out from Freenom');
 	dmsg($cmd);
@@ -227,9 +229,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	closelog();
 
-	/****************************************************************************
-	 *                            Helper Function                               *
-	 ****************************************************************************/
+	/***************************************************************************
+	 *                           Helper Function                               *
+	 **************************************************************************/
 	function msg($msg, $error = false) {
 		global $VERBOSE, $LOG;
 
