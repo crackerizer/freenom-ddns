@@ -32,13 +32,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		/* simple */
 		array(
 			"domain" => "",
-			"id" => "",
 		),
 		/* optional */
 		array(
 			"host" => "@,www",
 			"domain" => "",
-			"id" => "",
 			"ttl" => 300,
 		),
 	);
@@ -87,7 +85,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	}
 
 	msg('Logged in to Freenom');
+	
+	/* retrieve domain id */
+    $cmd = 	'curl --compressed -k -L -b "'.$COOKIE.
+			'" "https://my.freenom.com/clientarea.php?action=domains'.'" 2>&1';
 
+	msg('Getting domain list...');
+	dmsg($cmd);	
+	
+	exec($cmd, $result);
+	
+	$result = implode("", $result);
+
+    $pattern = '|<td class="second"><a href="(.*)" target="_blank">(.*)'.
+                ' <i style="font-size: 12px; color: #CCC;" '.
+                'class="fa fa-external-link"></i></a></td>(.*)<a '.
+                'class="smallBtn whiteBtn pullRight" '.
+                'href="clientarea.php\?action=domaindetails\&id=(.*)">|U';
+                
+    preg_match_all($pattern, $result, $domain_list);
+    
+    if($domain_list[2][0] == '') {
+        msg('Get domain list failed.', true);
+        die();
+    }
+    
+    $user_domains = array();
+    
+    for($n = 0; $n < count($domain_list[0]); $n++) {
+        $user_domains[$domain_list[2][$n]] = $domain_list[4][$n];
+    }
+	
+	dmsg($user_domains);
+	
 	/* process each domain */
 	foreach($DOMAINS as $domain) {
 		/* prepare variable */
@@ -106,13 +136,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		} else {
 			$ttl = $DEFAULT_TTL;
 		}
+		
+		$dm = $domain['domain'];
 
 		/* retrieve record html */
 		$cmd = 	'curl --compressed -k -L -b "'.$COOKIE.
 				'" "https://my.freenom.com/clientarea.php?managedns='.
-				$domain['domain'].'&domainid='.$domain["id"].'" 2>&1';
+				$dm.'&domainid='.$user_domains[$dm].'" 2>&1';
 
-		msg('Getting record list: '.$domain['domain']);
+		msg('Getting record list: '.$dm);
 		dmsg($cmd);
 
 		exec($cmd, $result);
@@ -144,7 +176,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		preg_match_all($pattern, $result, $raw_val);
 
 		$record_count = count($raw_record[0]);
-		msg("Records in {$domain['domain']}: $record_count");
+		msg("Records in {$dm}: $record_count");
 
 		dmsg($raw_record);
 		dmsg($raw_ttl);
@@ -200,21 +232,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		        $COOKIE.'" -F "dnsaction=modify" ';
 		$cmd .= implode(" ", $cmd_args);
 		$cmd .= ' "https://my.freenom.com/clientarea.php?managedns=';
-		$cmd .= $domain['domain'].'&domainid='.$domain["id"].'" 2>&1';
+		$cmd .= $dm.'&domainid='.$user_domains[$dm].'" 2>&1';
 
 		/* update the domain */
-		msg("Updating {$domain['domain']} ({$domain['id']})...");
+		msg("Updating {$dm} ({$user_domains[$dm]})...");
 		dmsg($cmd);
 
 		exec($cmd, $result);
 		$result = implode("\n", $result);
 
 		if(!(strpos($result, '<li class=\"dnssuccess\">') === false)) {
-			msg("Update {$domain['domain']} ({$domain['id']}): Failed", true);
+			msg("Update {$dm} ({$user_domains[$dm]}): Failed", true);
 			continue;
 		}
 
-		msg("Update {$domain['domain']} ({$domain['id']}): Done");
+		msg("Update {$dm} ({$user_domains[$dm]}): Done");
 	}
 
 	$cmd = 'curl --compressed -k -b "'.
