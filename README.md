@@ -1,5 +1,5 @@
-THIS PROJECT HAS BEEN ABANDONNED. CONSIDER USING NAMECHEAP FREE DNS WITH DDCLIENT INSTEAD.
-==========================================================================================
+THIS PROJECT HAS BEEN ABANDONNED. Consider using NameCheap with DDClient as an alternative.
+===========================================================================================
 
 
 
